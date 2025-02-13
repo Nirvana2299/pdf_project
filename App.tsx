@@ -6,113 +6,132 @@
  */
 
 import React from 'react';
-import type {PropsWithChildren} from 'react';
 import {
+  Alert,
+  Platform,
   SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
   Text,
+  TouchableHighlight,
   useColorScheme,
-  View,
+  Pressable
 } from 'react-native';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+import RNHTMLtoPDF from 'react-native-html-to-pdf';
+import FileViewer from "react-native-file-viewer";
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
+const invoice = [
+  {
+    id: 1,
+    key: 'Recipient',
+    value: 'Kolawole Emmauel',
+  },
+  {
+    id: 2,
+    key: 'Earrings',
+    value: '$40.00',
+  },
+  {
+    id: 3,
+    value: 'necklace',
+    key: '$100.00',
+  },
+  {
+    id: 4,
+    key: 'Total',
+    value: '$140.00',
+  },
+];
 
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
+const htmlContent = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Pdf Content</title>
+        <style>
+            body {
+                font-size: 16px;
+                color: rgb(255, 196, 0);
+            }
+            h1 {
+                text-align: center;
+            }
+                 .list {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        flex-wrap: wrap;
+        justify-content: space-between;
+      }
+      .key {
+        font-family: "Inter", sans-serif;
+        font-weight: 600;
+        color: #c9cdd2;
+        font-size: 12px;
+        line-height: 1.2;
+         width: 40%;
+      }
+      .value {
+        font-family: "Inter", sans-serif;
+        font-weight: 600;
+        color: #5e6978;
+        font-size: 12px;
+        line-height: 1.2;
+        text-transform: capitalize;
+        width:60%;
+        flex-wrap: wrap;
+      }
+        </style>
+    </head>
+    <body>
+        <h1>Treasury Jewels</h1>
+        <div class="confirmationBox_content">
+        ${invoice.map(
+  el =>
+    `<div
+                  class="list"
+                  key=${el.id}
+
+                >
+                  <p class="key">${el.key}</p>
+                  <p class="key">${el.value}</p>
+                </div>`,
+)}
+    </div>
+    </body>
+    </html>
+`;
+
+const createPDF = async () => {
+  try {
+    let PDFOptions = {
+      html: htmlContent,
+      fileName: 'test_pdf',
+      directory: Platform.OS === 'android' ? 'Downloads' : 'Documents',
+    };
+    let file = await RNHTMLtoPDF.convert(PDFOptions);
+    console.log('pdf', file.filePath);
+    if (!file.filePath) return;
+    Alert.alert(file.filePath);
+    FileViewer.open(file.filePath)
+  } catch (error) {
+    Alert.alert('Failed to generate pdf', error?.toString())
+    console.log('Failed to generate pdf', error);
+  }
+};
 
 function App(): React.JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
-
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
+    <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <Pressable style={{ backgroundColor: 'skyblue', paddingHorizontal: 30, paddingVertical: 10, borderRadius: 8 }}
+        onPress={createPDF}>
+        <Text style={{ color: '#000' }}>Create PDF</Text>
+      </Pressable>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
 
 export default App;
